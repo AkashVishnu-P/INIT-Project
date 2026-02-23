@@ -3,8 +3,10 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import AppNavbar from '@/components/AppNavbar';
+import { useAuth } from '@/context/AuthContext';
 
 export default function LearnPage() {
+  const { isLoading: authLoading, logout } = useAuth();
   const [expandedStep, setExpandedStep] = useState(0);
 
   const steps = [
@@ -71,7 +73,7 @@ export default function LearnPage() {
           <p className="text-gray-300">
             <strong>You don't need a lot of money to start investing!</strong>
           </p>
-          
+
           <div className="bg-slate-800/50 border-l-4 border-green-500 p-4 rounded">
             <p className="text-green-500 font-bold mb-3">Where does your money come from?</p>
             <div className="space-y-2">
@@ -390,6 +392,6 @@ export default function LearnPage() {
           <p>&copy; 2025 SafeStart Invest. Learn risk before money. Build discipline before profit.</p>
         </div>
       </footer>
-    </main>
+    </main >
   );
 }

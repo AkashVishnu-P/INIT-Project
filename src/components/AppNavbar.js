@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 
 const navLinks = [
   {
@@ -49,14 +50,8 @@ const navLinks = [
 
 export default function AppNavbar() {
   const pathname = usePathname();
-  const router = useRouter();
+  const { logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
-
-  const handleLogout = () => {
-    localStorage.removeItem("safestart_currentUser");
-    localStorage.removeItem("safestart_accountMode");
-    router.push("/");
-  };
 
   return (
     <header className="sticky top-0 z-50 bg-bg-card/90 backdrop-blur-lg border-b border-border">
@@ -78,11 +73,10 @@ export default function AppNavbar() {
               <Link
                 key={link.name}
                 href={link.href}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  isActive
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${isActive
                     ? "bg-primary/15 text-primary"
                     : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated"
-                }`}
+                  }`}
               >
                 {link.icon}
                 {link.name}
@@ -94,7 +88,7 @@ export default function AppNavbar() {
         {/* ── Desktop Right ── */}
         <div className="hidden md:flex items-center gap-3">
           <button
-            onClick={handleLogout}
+            onClick={logout}
             className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-text-secondary border border-border hover:border-red-500/60 hover:text-red-400 transition-all duration-200"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -132,11 +126,10 @@ export default function AppNavbar() {
                 key={link.name}
                 href={link.href}
                 onClick={() => setMobileOpen(false)}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                  isActive
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${isActive
                     ? "bg-primary/15 text-primary"
                     : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated"
-                }`}
+                  }`}
               >
                 {link.icon}
                 {link.name}
@@ -145,7 +138,7 @@ export default function AppNavbar() {
           })}
           <div className="pt-2 border-t border-border">
             <button
-              onClick={() => { setMobileOpen(false); handleLogout(); }}
+              onClick={() => { setMobileOpen(false); logout(); }}
               className="flex items-center gap-3 w-full px-4 py-3 rounded-lg text-sm font-medium text-red-400 hover:bg-red-500/10 transition-colors"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
