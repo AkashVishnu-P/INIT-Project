@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePortfolio } from "@/context/PortfolioContext";
+import AppNavbar from "@/components/AppNavbar";
 
 export default function SimulationDashboard() {
   const {
@@ -60,13 +61,9 @@ export default function SimulationDashboard() {
     return total + currentPrice * holding.quantity;
   }, 0);
 
-  const investedValue = activeHoldings.reduce((total, holding) => {
-    return total + holding.avgPrice * holding.quantity;
-  }, 0);
-
   const totalValue = activeBalance + holdingsValue;
-  const totalPnL = holdingsValue - investedValue;
-  const pnlPercent = investedValue > 0 ? ((totalPnL / investedValue) * 100).toFixed(2) : "0.00";
+  const totalPnL = totalValue - initialBalance;
+  const pnlPercent = initialBalance > 0 ? ((totalPnL / initialBalance) * 100).toFixed(2) : "0.00";
 
   const riskScore = calculateRiskScore();
   const riskColor =
@@ -102,66 +99,7 @@ export default function SimulationDashboard() {
 
   return (
     <div className="min-h-screen bg-bg-app">
-      {/* Header */}
-      <header className="border-b border-border bg-bg-card">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                <span className="text-white font-bold text-sm">S</span>
-              </div>
-              <span className="text-text-primary font-semibold">SafeStart</span>
-            </Link>
-            {/* Account Mode Switcher */}
-            <div className="flex items-center gap-1 bg-bg-elevated rounded-full p-1">
-              <button
-                onClick={() => switchAccountMode("virtual")}
-                className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                  accountMode === "virtual"
-                    ? "bg-primary text-white"
-                    : "text-text-muted hover:text-text-primary"
-                }`}
-              >
-                Virtual
-              </button>
-              <button
-                onClick={() => switchAccountMode("real")}
-                className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                  accountMode === "real"
-                    ? "bg-warning text-white"
-                    : "text-text-muted hover:text-text-primary"
-                }`}
-              >
-                Real
-              </button>
-            </div>
-          </div>
-          <div className="flex items-center gap-6">
-            <nav className="flex items-center gap-6">
-              <Link href="/dashboard-sim" className="text-primary font-medium text-sm">
-                Dashboard
-              </Link>
-              <Link href="/marketplace" className="text-text-muted hover:text-text-primary transition-colors text-sm">
-                Market
-              </Link>
-              <Link href="/leaderboard" className="text-text-muted hover:text-text-primary transition-colors text-sm">
-                Leaderboard
-              </Link>
-              <Link href="/learn" className="text-text-muted hover:text-text-primary transition-colors text-sm">
-                Learn
-              </Link>
-            </nav>
-            <div className="pl-6 border-l border-border text-right">
-              <p className="text-text-muted text-xs">
-                {accountMode === "real" ? "Real Balance" : "Virtual Balance"}
-              </p>
-              <p className="text-text-primary font-semibold">
-                ₹{activeBalance.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-              </p>
-            </div>
-          </div>
-        </div>
-      </header>
+      <AppNavbar />
 
       <main className="max-w-7xl mx-auto px-4 py-6 space-y-6">
         {/* AI Explanation Banner */}

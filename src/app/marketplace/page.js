@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePortfolio } from "@/context/PortfolioContext";
+import AppNavbar from "@/components/AppNavbar";
 
 // Fallback ETF Data (used when API fails)
 const fallbackETFs = [
@@ -131,42 +132,7 @@ export default function MarketplacePage() {
 
   return (
     <div className="min-h-screen bg-bg-app">
-      {/* Header */}
-      <header className="border-b border-border bg-bg-card">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                <span className="text-white font-bold text-sm">S</span>
-              </div>
-              <span className="text-text-primary font-semibold">SafeStart</span>
-            </Link>
-            <span className="px-2 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
-              Simulation
-            </span>
-          </div>
-          <div className="flex items-center gap-6">
-            <nav className="flex items-center gap-6">
-              <Link href="/dashboard-sim" className="text-text-muted hover:text-text-primary transition-colors text-sm">
-                Dashboard
-              </Link>
-              <Link href="/marketplace" className="text-primary font-medium text-sm">
-                Market
-              </Link>
-              <Link href="/learn" className="text-text-muted hover:text-text-primary transition-colors text-sm">
-                Learn
-              </Link>
-            </nav>
-            {/* Virtual Balance */}
-            <div className="pl-6 border-l border-border">
-              <p className="text-text-muted text-xs">Virtual Balance</p>
-              <p className="text-text-primary font-semibold">
-                ₹{isLoaded ? portfolio.virtualBalance.toLocaleString("en-IN", { minimumFractionDigits: 2 }) : "---"}
-              </p>
-            </div>
-          </div>
-        </div>
-      </header>
+      <AppNavbar />
 
       <main className="max-w-7xl mx-auto px-4 py-6 space-y-6">
         {/* Page Title & Market Summary */}

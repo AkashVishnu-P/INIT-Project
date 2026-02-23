@@ -19,15 +19,6 @@ export default function AuthPage() {
   const [loggedInUser, setLoggedInUser] = useState(null);
   const [step, setStep] = useState("auth"); // "auth" | "select-account"
 
-  const getUsers = () => {
-    if (typeof window === "undefined") return [];
-    return JSON.parse(localStorage.getItem("safestart_users")) || [];
-  };
-
-  const saveUsers = (users) => {
-    localStorage.setItem("safestart_users", JSON.stringify(users));
-  };
-
   const toggleMode = () => {
     setIsLogin(!isLogin);
     setError("");
@@ -47,24 +38,23 @@ export default function AuthPage() {
 
     try {
       if (isLogin) {
-        // Login using MongoDB API
+        // ─── Login via API ───
         const res = await fetch("/api/auth/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
+          body: JSON.stringify({ email: email.trim(), password }),
         });
-
         const data = await res.json();
 
-        if (res.ok) {
+        if (!res.ok) {
+          setError(data.message || "Invalid email or password!");
+        } else {
           localStorage.setItem("safestart_currentUser", JSON.stringify(data.user));
           setLoggedInUser(data.user);
           setStep("select-account");
-        } else {
-          setError(data.message || "Invalid email or password!");
         }
       } else {
-        // Signup validation
+        // ─── Sign Up via API ───
         if (!name.trim()) {
           setError("Please enter your name!");
           setIsLoading(false);
@@ -81,28 +71,26 @@ export default function AuthPage() {
           return;
         }
 
-        // Signup using MongoDB API
         const res = await fetch("/api/auth/signup", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, email, password }),
+          body: JSON.stringify({ name: name.trim(), email: email.trim(), password }),
         });
-
         const data = await res.json();
 
-        if (res.ok) {
+        if (!res.ok) {
+          setError(data.message || "Something went wrong!");
+        } else {
+          // Account created — switch to login form
           setIsLogin(true);
           setPassword("");
           setConfirmPassword("");
           setName("");
           setError("");
-        } else {
-          setError(data.message || "Signup failed!");
         }
       }
     } catch (err) {
-      console.error("Auth error:", err);
-      setError("Something went wrong. Please try again.");
+      setError("Network error. Please try again.");
     }
 
     setIsLoading(false);

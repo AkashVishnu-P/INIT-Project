@@ -41,6 +41,22 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Page & Link Transitions */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+a, button {
+  transition-property: color, background-color, border-color, opacity, transform, box-shadow;
+  transition-duration: 200ms;
+  transition-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+/* Smooth scroll */
+html {
+  scroll-behavior: smooth;
+}
+
 /* Scrollbar Styling */
 ::-webkit-scrollbar {
   width: 8px;
