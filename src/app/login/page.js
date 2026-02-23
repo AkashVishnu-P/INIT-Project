@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 
 export default function AuthPage() {
   const router = useRouter();
+  const { login: authLogin, isAuthenticated, isLoading: authLoading } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -46,12 +48,12 @@ export default function AuthPage() {
         });
         const data = await res.json();
 
-        if (!res.ok) {
-          setError(data.message || "Invalid email or password!");
-        } else {
-          localStorage.setItem("safestart_currentUser", JSON.stringify(data.user));
+        if (res.ok) {
+          authLogin(data.user);
           setLoggedInUser(data.user);
           setStep("select-account");
+        } else {
+          setError(data.message || "Invalid email or password!");
         }
       } else {
         // ─── Sign Up via API ───

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePortfolio } from "@/context/PortfolioContext";
 import AppNavbar from "@/components/AppNavbar";
+import { useAuth } from "@/context/AuthContext";
 
 // Fallback ETF Data (used when API fails)
 const fallbackETFs = [
@@ -58,6 +59,7 @@ const riskLevels = ["All", "Low", "Medium", "High"];
 
 export default function MarketplacePage() {
   const { portfolio, buyETF, isLoaded } = usePortfolio();
+  const { isLoading: authLoading, logout } = useAuth();
   const [etfData, setEtfData] = useState(fallbackETFs);
   const [isLoading, setIsLoading] = useState(true);
   const [isLive, setIsLive] = useState(false);
@@ -275,13 +277,12 @@ export default function MarketplacePage() {
                     <p className="text-text-muted text-sm">{etf.symbol}</p>
                   </div>
                   <span
-                    className={`px-2 py-1 rounded text-xs font-medium ${
-                      etf.risk === "Low"
-                        ? "bg-success/10 text-success"
-                        : etf.risk === "Medium"
+                    className={`px-2 py-1 rounded text-xs font-medium ${etf.risk === "Low"
+                      ? "bg-success/10 text-success"
+                      : etf.risk === "Medium"
                         ? "bg-warning/10 text-warning"
                         : "bg-danger/10 text-danger"
-                    }`}
+                      }`}
                   >
                     {etf.risk}
                   </span>
@@ -307,7 +308,7 @@ export default function MarketplacePage() {
                 <div className="h-12 bg-bg-elevated rounded-lg flex items-center justify-center mb-4">
                   <div className="flex items-end gap-1 h-8">
                     {(etf.historicalData || [40, 55, 45, 60, 50, 70, 65, 75, 68, 72]).map((h, i) => {
-                      const normalized = etf.historicalData 
+                      const normalized = etf.historicalData
                         ? ((h - Math.min(...etf.historicalData)) / (Math.max(...etf.historicalData) - Math.min(...etf.historicalData) || 1)) * 100
                         : h;
                       return (
@@ -353,13 +354,12 @@ export default function MarketplacePage() {
                 <div className="flex items-center gap-3">
                   <h2 className="text-2xl font-bold text-text-primary">{selectedETF.name}</h2>
                   <span
-                    className={`px-2 py-1 rounded text-xs font-medium ${
-                      selectedETF.risk === "Low"
-                        ? "bg-success/10 text-success"
-                        : selectedETF.risk === "Medium"
+                    className={`px-2 py-1 rounded text-xs font-medium ${selectedETF.risk === "Low"
+                      ? "bg-success/10 text-success"
+                      : selectedETF.risk === "Medium"
                         ? "bg-warning/10 text-warning"
                         : "bg-danger/10 text-danger"
-                    }`}
+                      }`}
                   >
                     {selectedETF.risk} Risk
                   </span>
@@ -465,8 +465,8 @@ export default function MarketplacePage() {
                     {selectedETF.risk === "Low"
                       ? `${selectedETF.name} is a conservative choice suitable for beginners. Its low volatility makes it ideal for building your first portfolio.`
                       : selectedETF.risk === "Medium"
-                      ? `${selectedETF.name} offers balanced risk-reward. Consider pairing with low-risk ETFs for diversification.`
-                      : `${selectedETF.name} has higher volatility. Only invest if you understand sector-specific risks and have a diversified portfolio.`}
+                        ? `${selectedETF.name} offers balanced risk-reward. Consider pairing with low-risk ETFs for diversification.`
+                        : `${selectedETF.name} has higher volatility. Only invest if you understand sector-specific risks and have a diversified portfolio.`}
                   </p>
                 </div>
               </div>
@@ -556,10 +556,9 @@ export default function MarketplacePage() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-text-muted">Risk Level</span>
-                    <span className={`${
-                      selectedETF.risk === "Low" ? "text-success" :
+                    <span className={`${selectedETF.risk === "Low" ? "text-success" :
                       selectedETF.risk === "Medium" ? "text-warning" : "text-danger"
-                    }`}>
+                      }`}>
                       {selectedETF.risk}
                     </span>
                   </div>
@@ -601,9 +600,8 @@ export default function MarketplacePage() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-text-muted">Available Balance</span>
-                    <span className={`font-medium ${
-                      portfolio.virtualBalance >= selectedETF.price * buyQuantity ? "text-success" : "text-danger"
-                    }`}>
+                    <span className={`font-medium ${portfolio.virtualBalance >= selectedETF.price * buyQuantity ? "text-success" : "text-danger"
+                      }`}>
                       ₹{portfolio.virtualBalance.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                     </span>
                   </div>

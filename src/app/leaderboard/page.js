@@ -1,12 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import AppNavbar from "@/components/AppNavbar";
+import { useAuth } from "@/context/AuthContext";
 
 export default function LeaderboardPage() {
   const [leaderboard, setLeaderboard] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { isLoading: authLoading, logout } = useAuth();
 
   useEffect(() => {
     const fetchLeaderboard = async () => {
