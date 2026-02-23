@@ -32,75 +32,111 @@ export default function AuthPage() {
     // Simulate API delay
     await new Promise((resolve) => setTimeout(resolve, 800));
 
-    const users = getUsers();
+    const [isLogin, setIsLogin] = useState(true);
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
+    const [error, setError] = useState("");
 
-    if (isLogin) {
-      const user = users.find(
-        (u) => u.email === email.trim().toLowerCase() && u.password === password
-      );
+    const getUsers = () => {
+      if (typeof window === "undefined") return [];
+      return JSON.parse(localStorage.getItem("users")) || [];
+    };
 
-      if (user) {
-        localStorage.setItem("safestart_current_user", JSON.stringify(user));
-        router.push("/dashboard-sim");
+    const saveUsers = (users) => {
+      localStorage.setItem("users", JSON.stringify(users));
+    };
+
+    function handleSubmit(e) {
+      e.preventDefault();
+      setError("");
+
+      const users = getUsers();
+
+      if (isLogin) {
+        const user = users.find(
+          (u) => u.email === email.trim() && u.password === password.trim()
+        );
+        if (user) {
+          alert("Login Successful!");
+        } else {
+          setError("Invalid email or password!");
+        }
       } else {
-        setError("Invalid email or password");
-      }
-    } else {
-      if (password.length < 6) {
-        setError("Password must be at least 6 characters");
-        setIsLoading(false);
-        return;
-      }
-
-      if (password !== confirmPassword) {
-        setError("Passwords do not match");
-        setIsLoading(false);
-        return;
-      }
-
-      const userExists = users.some(
-        (u) => u.email === email.trim().toLowerCase()
-      );
-
-      if (userExists) {
-        setError("An account with this email already exists");
-      } else {
-        const newUser = {
-          id: Date.now(),
-          name: name.trim(),
-          email: email.trim().toLowerCase(),
-          password,
-          createdAt: new Date().toISOString(),
-        };
-        users.push(newUser);
-        saveUsers(users);
-        localStorage.setItem("safestart_current_user", JSON.stringify(newUser));
-        router.push("/dashboard-sim");
+        if (password !== confirmPassword) {
+          setError("Passwords do not match!");
+          return;
+        }
+        const userExists = users.some((u) => u.email === email.trim());
+        if (userExists) {
+          setError("User already exists!");
+        } else {
+          users.push({ email: email.trim(), password: password.trim() });
+          saveUsers(users);
+          alert("Account created successfully!");
+          setIsLogin(true);
+        }
       }
     }
 
-    setIsLoading(false);
-  };
-
-  const toggleMode = () => {
-    setIsLogin(!isLogin);
-    setError("");
-    setPassword("");
-    setConfirmPassword("");
-  };
-
-  return (
-    <div className="min-h-screen bg-bg-app flex flex-col">
-      {/* Header */}
-      <header className="border-b border-border bg-bg-card">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-white font-bold text-sm">S</span>
-            </div>
-            <span className="text-text-primary font-semibold">SafeStart Invest</span>
-          </Link>
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-950">
+        <div className="bg-slate-900/90 p-10 rounded-2xl shadow-xl w-full max-w-sm flex flex-col items-center">
+          <h2 className="text-3xl font-semibold mb-6 text-white tracking-tight font-sans">
+            {isLogin ? "Login" : "Sign Up"}
+          </h2>
+          <form onSubmit={handleSubmit} className="w-full flex flex-col gap-4">
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              required
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full px-4 py-2 rounded-md border border-slate-700 bg-slate-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600 transition"
+            />
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              required
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-4 py-2 rounded-md border border-slate-700 bg-slate-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600 transition"
+            />
+            {!isLogin && (
+              <input
+                type="password"
+                placeholder="Confirm Password"
+                value={confirmPassword}
+                required
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="w-full px-4 py-2 rounded-md border border-slate-700 bg-slate-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600 transition"
+              />
+            )}
+            {error && (
+              <p className="text-red-500 text-sm text-center font-medium">{error}</p>
+            )}
+            <button
+              type="submit"
+              className="w-full py-2 mt-2 rounded-md bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-bold text-lg tracking-wide transition"
+            >
+              {isLogin ? "Login" : "Sign Up"}
+            </button>
+          </form>
+          <p className="mt-5 text-gray-400 text-sm">
+            {isLogin ? "New user?" : "Already have an account?"}{" "}
+            <span
+              className="underline cursor-pointer text-blue-600 hover:text-blue-500 font-semibold"
+              onClick={() => {
+                setIsLogin(!isLogin);
+                setError("");
+              }}
+            >
+              {isLogin ? "Sign Up" : "Login"}
+            </span>
+          </p>
         </div>
+      </div>
+    );
       </header>
 
       {/* Main Content */}
