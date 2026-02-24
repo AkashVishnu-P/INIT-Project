@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 
 export default function NewsPage() {
   const [news, setNews] = useState([])
@@ -65,7 +66,29 @@ export default function NewsPage() {
 
   return (
     <div className="min-h-screen bg-[#020617] text-white">
-      {/* Header */}
+      {/* Navigation Header */}
+      <header className="border-b border-[#334155] bg-[#0f172a] sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Link href="/dashboard-sim" className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-[#2563eb] flex items-center justify-center">
+                <span className="text-white font-bold text-sm">S</span>
+              </div>
+              <span className="text-white font-semibold">SafeStart</span>
+            </Link>
+            <span className="px-2 py-1 rounded-full bg-[#2563eb]/10 text-[#2563eb] text-xs font-medium">News</span>
+          </div>
+          <nav className="flex items-center gap-6">
+            <Link href="/dashboard-sim" className="text-[#9ca3af] hover:text-white transition-colors text-sm">Dashboard</Link>
+            <Link href="/marketplace" className="text-[#9ca3af] hover:text-white transition-colors text-sm">Market</Link>
+            <Link href="/news" className="text-[#2563eb] font-medium text-sm">News</Link>
+            <Link href="/quest" className="text-[#9ca3af] hover:text-white transition-colors text-sm">Quiz</Link>
+            <Link href="/learn" className="text-[#9ca3af] hover:text-white transition-colors text-sm">Learn</Link>
+          </nav>
+        </div>
+      </header>
+
+      {/* Page Header */}
       <div className="border-b border-[#334155]">
         <div className="max-w-7xl mx-auto px-6 py-8">
           <div className="flex justify-between items-start gap-6">
@@ -157,7 +180,7 @@ export default function NewsPage() {
                         </p>
                       </div>
                       <div className="flex-shrink-0">
-                        <span style={{ color: getSentimentColor(item.overall_sentiment) }} className="inline-block text-xs font-semibold px-2 py-1 rounded bg-current/10">
+                        <span style={{ color: getSentimentColor(item.overall_sentiment), backgroundColor: `${getSentimentColor(item.overall_sentiment)}15` }} className="inline-block text-xs font-semibold px-2 py-1 rounded">
                           {item.source}
                         </span>
                       </div>
