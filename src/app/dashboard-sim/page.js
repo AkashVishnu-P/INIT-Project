@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePortfolio } from "@/context/PortfolioContext";
 import AppNavbar from "@/components/AppNavbar";
-import { useAuth } from "@/context/AuthContext";
 
 export default function SimulationDashboard() {
   const {
@@ -20,8 +19,6 @@ export default function SimulationDashboard() {
     getInitialBalance,
   } = usePortfolio();
 
-  const { user, isLoading: authLoading, logout } = useAuth();
-
   const accountMode = portfolio.accountMode || "virtual";
   const activeBalance = getActiveBalance();
   const activeHoldings = getActiveHoldings();
@@ -33,6 +30,7 @@ export default function SimulationDashboard() {
     "Welcome to your simulation dashboard! Your portfolio is updated in real-time. Visit the Market to buy ETFs."
   );
 
+  // Fetch current ETF prices
   const fetchPrices = useCallback(async () => {
     try {
       const response = await fetch("/api/market");
@@ -57,14 +55,19 @@ export default function SimulationDashboard() {
     return () => clearInterval(interval);
   }, [fetchPrices]);
 
+  // Calculate portfolio value with current prices
   const holdingsValue = activeHoldings.reduce((total, holding) => {
     const currentPrice = etfPrices[holding.symbol]?.price || holding.avgPrice;
     return total + currentPrice * holding.quantity;
   }, 0);
 
+  const investedValue = activeHoldings.reduce((total, holding) => {
+    return total + holding.avgPrice * holding.quantity;
+  }, 0);
+
   const totalValue = activeBalance + holdingsValue;
-  const totalPnL = totalValue - initialBalance;
-  const pnlPercent = initialBalance > 0 ? ((totalPnL / initialBalance) * 100).toFixed(2) : "0.00";
+  const totalPnL = holdingsValue - investedValue;
+  const pnlPercent = investedValue > 0 ? ((totalPnL / investedValue) * 100).toFixed(2) : "0.00";
 
   const riskScore = calculateRiskScore();
   const riskColor =
@@ -90,13 +93,10 @@ export default function SimulationDashboard() {
     }
   };
 
-  if (!isLoaded || authLoading) {
+  if (!isLoaded) {
     return (
       <div className="min-h-screen bg-bg-app flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
-          <p className="text-text-muted text-sm">Loading dashboard...</p>
-        </div>
+        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
       </div>
     );
   }
@@ -105,57 +105,61 @@ export default function SimulationDashboard() {
     <div className="min-h-screen bg-bg-app">
       <AppNavbar />
 
-      <main className="relative z-10 max-w-7xl mx-auto px-4 py-6 space-y-6">
+      <main className="max-w-7xl mx-auto px-4 py-6 space-y-6">
         {/* AI Explanation Banner */}
-        <div className="rounded-xl glass-card p-4 flex gap-3 border-l-4 border-l-primary animate-fade-in-up">
-          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-primary/20 to-accent-cyan/10 flex items-center justify-center flex-shrink-0">
+        <div className="rounded-xl bg-primary/10 border border-primary/20 p-4 flex gap-3">
+          <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
             <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
             </svg>
           </div>
           <div>
-            <p className="text-primary text-sm font-semibold">AI Insight</p>
-            <p className="text-text-secondary text-sm mt-0.5">{aiExplanation}</p>
+            <p className="text-primary text-sm font-medium">AI Insight</p>
+            <p className="text-text-secondary text-sm mt-1">{aiExplanation}</p>
           </div>
         </div>
 
         {/* Portfolio Overview Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="rounded-xl glass-card p-4 card-hover border-l-4 border-l-primary/50">
-            <p className="text-text-muted text-xs mb-1 font-medium">Portfolio Value</p>
+          {/* Total Value */}
+          <div className="rounded-xl bg-bg-card border border-border p-4">
+            <p className="text-text-muted text-xs mb-1">Portfolio Value</p>
             <p className="text-2xl font-bold text-text-primary">
               ₹{totalValue.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
             </p>
           </div>
 
-          <div className={`rounded-xl glass-card p-4 card-hover border-l-4 ${totalPnL >= 0 ? "border-l-success/50" : "border-l-danger/50"}`}>
-            <p className="text-text-muted text-xs mb-1 font-medium">Total P&L</p>
+          {/* P&L */}
+          <div className="rounded-xl bg-bg-card border border-border p-4">
+            <p className="text-text-muted text-xs mb-1">Total P&L</p>
             <p className={`text-2xl font-bold ${totalPnL >= 0 ? "text-success" : "text-danger"}`}>
               {totalPnL >= 0 ? "+" : ""}₹{totalPnL.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
             </p>
-            <p className={`text-xs font-medium ${totalPnL >= 0 ? "text-success/70" : "text-danger/70"}`}>
+            <p className={`text-xs ${totalPnL >= 0 ? "text-success" : "text-danger"}`}>
               {totalPnL >= 0 ? "+" : ""}{pnlPercent}%
             </p>
           </div>
 
-          <div className="rounded-xl glass-card p-4 card-hover border-l-4 border-l-accent-cyan/50">
-            <p className="text-text-muted text-xs mb-1 font-medium">Holdings Value</p>
+          {/* Holdings */}
+          <div className="rounded-xl bg-bg-card border border-border p-4">
+            <p className="text-text-muted text-xs mb-1">Holdings Value</p>
             <p className="text-2xl font-bold text-text-primary">
               ₹{holdingsValue.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
             </p>
           </div>
 
-          <div className="rounded-xl glass-card p-4 card-hover border-l-4 border-l-accent-violet/50">
-            <p className="text-text-muted text-xs mb-1 font-medium">Risk Level</p>
+          {/* Risk Meter */}
+          <div className="rounded-xl bg-bg-card border border-border p-4">
+            <p className="text-text-muted text-xs mb-1">Risk Level</p>
             <p className={`text-2xl font-bold ${riskColor}`}>{riskScore}</p>
-            <div className="mt-2 h-1.5 bg-white/[0.04] rounded-full overflow-hidden">
+            <div className="mt-2 h-2 bg-bg-elevated rounded-full overflow-hidden">
               <div
-                className={`h-full rounded-full transition-all duration-500 ${riskScore === "Low"
-                  ? "w-1/3 bg-gradient-to-r from-success to-success/60"
+                className={`h-full transition-all ${riskScore === "Low"
+                  ? "w-1/3 bg-success"
                   : riskScore === "Medium"
-                    ? "w-2/3 bg-gradient-to-r from-warning to-warning/60"
+                    ? "w-2/3 bg-warning"
                     : riskScore === "High"
-                      ? "w-full bg-gradient-to-r from-danger to-danger/60"
+                      ? "w-full bg-danger"
                       : "w-0"
                   }`}
               />
@@ -166,46 +170,47 @@ export default function SimulationDashboard() {
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Holdings Section */}
           <div className="lg:col-span-2 space-y-6">
-            <div className="rounded-xl glass-card p-5">
+            {/* Current Holdings */}
+            <div className="rounded-xl bg-bg-card border border-border p-5">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-bold text-text-primary">Your Holdings</h2>
-                <Link href="/marketplace" className="px-3 py-1.5 rounded-lg bg-primary/10 text-primary text-sm font-medium hover:bg-primary/20 transition-colors">
+                <h2 className="text-lg font-semibold text-text-primary">Your Holdings</h2>
+                <Link href="/marketplace" className="text-primary text-sm hover:underline">
                   + Buy More
                 </Link>
               </div>
 
               {activeHoldings.length === 0 ? (
-                <div className="text-center py-10">
-                  <div className="w-16 h-16 rounded-2xl bg-white/[0.03] mx-auto flex items-center justify-center mb-4">
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 rounded-full bg-bg-elevated mx-auto flex items-center justify-center mb-3">
                     <svg className="w-8 h-8 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                     </svg>
                   </div>
-                  <p className="text-text-muted font-medium">No holdings yet</p>
+                  <p className="text-text-muted">No holdings yet</p>
                   <p className="text-text-muted text-sm mb-4">Start investing from the marketplace</p>
-                  <Link href="/marketplace" className="inline-block px-6 py-2.5 rounded-xl bg-gradient-to-r from-primary to-primary-light text-white text-sm font-semibold hover:shadow-lg hover:shadow-primary/25 transition-all">
+                  <Link href="/marketplace" className="inline-block px-6 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary-light">
                     Explore ETFs
                   </Link>
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {activeHoldings.map((holding, idx) => {
+                  {activeHoldings.map((holding) => {
                     const currentPrice = etfPrices[holding.symbol]?.price || holding.avgPrice;
                     const currentValue = currentPrice * holding.quantity;
-                    const investedVal = holding.avgPrice * holding.quantity;
-                    const pnl = currentValue - investedVal;
-                    const pnlPct = ((pnl / investedVal) * 100).toFixed(2);
+                    const investedValue = holding.avgPrice * holding.quantity;
+                    const pnl = currentValue - investedValue;
+                    const pnlPercent = ((pnl / investedValue) * 100).toFixed(2);
                     const priceChange = etfPrices[holding.symbol]?.change || 0;
 
                     return (
                       <div
                         key={holding.symbol}
-                        className="flex items-center justify-between p-4 rounded-xl bg-white/[0.02] border border-white/[0.04] hover:border-white/[0.08] hover:bg-white/[0.03] transition-all"
+                        className="flex items-center justify-between p-4 rounded-lg bg-bg-elevated"
                       >
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
-                            <p className="font-semibold text-text-primary">{holding.name}</p>
-                            <span className={`px-2 py-0.5 rounded-md text-xs font-medium ${holding.risk === "Low" ? "bg-success/10 text-success" :
+                            <p className="font-medium text-text-primary">{holding.name}</p>
+                            <span className={`px-2 py-0.5 rounded text-xs ${holding.risk === "Low" ? "bg-success/10 text-success" :
                               holding.risk === "Medium" ? "bg-warning/10 text-warning" :
                                 "bg-danger/10 text-danger"
                               }`}>
@@ -215,24 +220,24 @@ export default function SimulationDashboard() {
                           <p className="text-text-muted text-sm">
                             {holding.quantity} units @ ₹{holding.avgPrice.toFixed(2)} avg
                           </p>
-                          <p className="text-text-muted text-xs mt-0.5">
+                          <p className="text-text-muted text-xs mt-1">
                             Current: ₹{currentPrice.toFixed(2)}
-                            <span className={`ml-1 font-medium ${priceChange >= 0 ? "text-success" : "text-danger"}`}>
+                            <span className={`ml-1 ${priceChange >= 0 ? "text-success" : "text-danger"}`}>
                               ({priceChange >= 0 ? "+" : ""}{priceChange.toFixed(2)})
                             </span>
                           </p>
                         </div>
                         <div className="text-right mr-4">
-                          <p className="font-semibold text-text-primary">
+                          <p className="font-medium text-text-primary">
                             ₹{currentValue.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                           </p>
-                          <p className={`text-sm font-medium ${pnl >= 0 ? "text-success" : "text-danger"}`}>
-                            {pnl >= 0 ? "+" : ""}₹{pnl.toFixed(2)} ({pnlPct}%)
+                          <p className={`text-sm ${pnl >= 0 ? "text-success" : "text-danger"}`}>
+                            {pnl >= 0 ? "+" : ""}₹{pnl.toFixed(2)} ({pnlPercent}%)
                           </p>
                         </div>
                         <button
                           onClick={() => handleSell(holding)}
-                          className="px-4 py-2 rounded-xl bg-danger/10 text-danger text-sm font-semibold hover:bg-danger/20 transition-all border border-danger/10 hover:border-danger/20"
+                          className="px-4 py-2 rounded-lg bg-danger/10 text-danger text-sm font-medium hover:bg-danger/20 transition-colors"
                         >
                           Sell All
                         </button>
@@ -247,15 +252,15 @@ export default function SimulationDashboard() {
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Transaction History */}
-            <div className="rounded-xl glass-card p-5">
-              <h2 className="text-lg font-bold text-text-primary mb-4">Recent Transactions</h2>
+            <div className="rounded-xl bg-bg-card border border-border p-5">
+              <h2 className="text-lg font-semibold text-text-primary mb-4">Recent Transactions</h2>
               {activeTransactions.length === 0 ? (
                 <p className="text-text-muted text-sm text-center py-4">No transactions yet</p>
               ) : (
-                <div className="space-y-2.5 max-h-80 overflow-y-auto">
+                <div className="space-y-3 max-h-80 overflow-y-auto">
                   {activeTransactions.slice(0, 10).map((tx) => (
-                    <div key={tx.id} className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/[0.04] hover:bg-white/[0.03] transition-all">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${tx.type === "BUY" ? "bg-success/10 text-success" :
+                    <div key={tx.id} className="flex items-center gap-3 p-3 rounded-lg bg-bg-elevated">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${tx.type === "BUY" ? "bg-success/10 text-success" :
                         tx.type === "SELL" ? "bg-danger/10 text-danger" :
                           "bg-primary/10 text-primary"
                         }`}>
@@ -273,8 +278,8 @@ export default function SimulationDashboard() {
                           </svg>
                         )}
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-text-primary truncate">
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-text-primary">
                           {tx.type} {tx.symbol || "Funds"}
                         </p>
                         <p className="text-xs text-text-muted">
@@ -282,7 +287,7 @@ export default function SimulationDashboard() {
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className={`text-sm font-semibold ${tx.type === "BUY" ? "text-danger" :
+                        <p className={`text-sm font-medium ${tx.type === "BUY" ? "text-danger" :
                           tx.type === "SELL" ? "text-success" :
                             "text-primary"
                           }`}>
@@ -299,47 +304,48 @@ export default function SimulationDashboard() {
             </div>
 
             {/* Learning Progress */}
-            <div className="rounded-xl glass-card p-5">
-              <h2 className="text-lg font-bold text-text-primary mb-4">Unlock Real Mode</h2>
+            <div className="rounded-xl bg-bg-card border border-border p-5">
+              <h2 className="text-lg font-semibold text-text-primary mb-4">Unlock Real Mode</h2>
               <div className="space-y-4">
                 <div>
                   <div className="flex justify-between text-sm mb-2">
-                    <span className="text-text-muted font-medium">Learning Modules</span>
-                    <span className="text-text-primary font-semibold">{portfolio.completedModules}/5</span>
+                    <span className="text-text-muted">Learning Modules</span>
+                    <span className="text-text-primary">{portfolio.completedModules}/5</span>
                   </div>
-                  <div className="h-2 bg-white/[0.04] rounded-full overflow-hidden">
+                  <div className="h-2 bg-bg-elevated rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-gradient-to-r from-primary to-accent-cyan rounded-full transition-all duration-500"
+                      className="h-full bg-primary rounded-full transition-all"
                       style={{ width: `${(portfolio.completedModules / 5) * 100}%` }}
                     />
                   </div>
                 </div>
                 <div>
                   <div className="flex justify-between text-sm mb-2">
-                    <span className="text-text-muted font-medium">Risk Assessment</span>
-                    <span className={`font-semibold ${portfolio.riskAssessmentPassed ? "text-success" : "text-warning"}`}>
-                      {portfolio.riskAssessmentPassed ? "✓ Passed" : "Pending"}
+                    <span className="text-text-muted">Risk Assessment</span>
+                    <span className={portfolio.riskAssessmentPassed ? "text-success" : "text-warning"}>
+                      {portfolio.riskAssessmentPassed ? "Passed" : "Pending"}
                     </span>
                   </div>
                 </div>
                 <div>
                   <div className="flex justify-between text-sm mb-2">
-                    <span className="text-text-muted font-medium">Parent Approval</span>
-                    <span className={`font-semibold ${portfolio.parentApproved ? "text-success" : "text-warning"}`}>
-                      {portfolio.parentApproved ? "✓ Approved" : "Pending"}
+                    <span className="text-text-muted">Parent Approval</span>
+                    <span className={portfolio.parentApproved ? "text-success" : "text-warning"}>
+                      {portfolio.parentApproved ? "Approved" : "Pending"}
                     </span>
                   </div>
                 </div>
 
-                <div className={`p-3.5 rounded-xl mt-4 border ${accountMode === "real"
-                  ? "bg-warning/5 border-warning/15"
-                  : "bg-primary/5 border-primary/15"
+                {/* Parent Funding Info */}
+                <div className={`p-3 rounded-lg mt-4 ${accountMode === "real"
+                  ? "bg-warning/10 border border-warning/20"
+                  : "bg-primary/10 border border-primary/20"
                   }`}>
-                  <p className={`text-sm font-semibold mb-1 ${accountMode === "real" ? "text-warning" : "text-primary"
+                  <p className={`text-sm font-medium mb-1 ${accountMode === "real" ? "text-warning" : "text-primary"
                     }`}>
                     {accountMode === "real" ? "💵 Real Account" : "💰 Virtual Account"}
                   </p>
-                  <p className="text-text-secondary text-xs leading-relaxed">
+                  <p className="text-text-secondary text-xs">
                     {accountMode === "real"
                       ? "You are investing real money. Be careful with your trades!"
                       : `You started with ₹${initialBalance.toLocaleString("en-IN")} virtual money. Switch to Real Account when you're ready.`}
@@ -348,7 +354,7 @@ export default function SimulationDashboard() {
 
                 <button
                   disabled={!portfolio.riskAssessmentPassed || !portfolio.parentApproved}
-                  className="w-full py-3 rounded-xl bg-white/[0.04] text-text-muted text-sm font-semibold cursor-not-allowed disabled:opacity-50 border border-white/[0.06]"
+                  className="w-full py-3 rounded-lg bg-bg-elevated text-text-muted text-sm font-medium cursor-not-allowed disabled:opacity-50"
                 >
                   Complete Requirements to Unlock
                 </button>
