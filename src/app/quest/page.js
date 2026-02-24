@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react"
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 const BANK = [
   { q: 'What is micro-investing?', opts: ['Investing millions of dollars', 'Investing small amounts of money regularly', 'Gambling online', 'Buying only expensive stocks'], a: 1 },
@@ -64,27 +65,29 @@ function shuffle(arr) {
   const a = arr.slice()
   for (let i = a.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1))
-    ;[a[i], a[j]] = [a[j], a[i]]
+      ;[a[i], a[j]] = [a[j], a[i]]
   }
   return a
 }
 
-export default function Page(){
+export default function Page() {
   const router = useRouter()
   const [quiz, setQuiz] = useState(() => shuffle(BANK).slice(0, 10))
   const [answers, setAnswers] = useState({})
   const [submitted, setSubmitted] = useState(false)
   const [score, setScore] = useState(null)
   const [willRedirect, setWillRedirect] = useState(false)
+  const [errMsg, setErrMsg] = useState('')
 
   const restart = () => {
     setQuiz(shuffle(BANK).slice(0, 10))
     setAnswers({})
     setSubmitted(false)
     setScore(null)
-}
+    setErrMsg('')
+  }
 
-  function handleSelect(idx, optIdx){
+  function handleSelect(idx, optIdx) {
     if (submitted) return
     // If clicking the same option again, deselect it
     if (answers[idx] === optIdx) {
@@ -96,18 +99,18 @@ export default function Page(){
     } else {
       setAnswers(a => ({ ...a, [idx]: optIdx }))
     }
-}
+  }
 
-  function handleSubmit(){
+  function handleSubmit() {
     // require all answered
     if (Object.keys(answers).length < quiz.length) {
-      alert('Please answer all questions before submitting.')
+      setErrMsg('Please answer all questions before submitting.')
       return
-}
+    }
     let s = 0
-    quiz.forEach((q, i) =>{
+    quiz.forEach((q, i) => {
       if (answers[i] === q.a) s++
-})
+    })
     setScore(s)
     setSubmitted(true)
     // If user scored 7 or more, show score briefly then redirect to dashboard-sim
@@ -122,8 +125,30 @@ export default function Page(){
   const needsRetest = submitted && score < 7
 
   return (
-    <main className="min-h-screen p-6 bg-gray-900 text-white">
-      <div className="max-w-3xl mx-auto">
+    <main className="min-h-screen bg-gray-900 text-white">
+      {/* Navigation Header */}
+      <header className="border-b border-gray-700 bg-gray-800/90 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Link href="/dashboard-sim" className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
+                <span className="text-white font-bold text-sm">S</span>
+              </div>
+              <span className="text-white font-semibold">SafeStart</span>
+            </Link>
+            <span className="px-2 py-1 rounded-full bg-blue-600/10 text-blue-400 text-xs font-medium">Quiz</span>
+          </div>
+          <nav className="flex items-center gap-6">
+            <Link href="/dashboard-sim" className="text-gray-400 hover:text-white transition-colors text-sm">Dashboard</Link>
+            <Link href="/marketplace" className="text-gray-400 hover:text-white transition-colors text-sm">Market</Link>
+            <Link href="/news" className="text-gray-400 hover:text-white transition-colors text-sm">News</Link>
+            <Link href="/quest" className="text-blue-400 font-medium text-sm">Quiz</Link>
+            <Link href="/learn" className="text-gray-400 hover:text-white transition-colors text-sm">Learn</Link>
+          </nav>
+        </div>
+      </header>
+
+      <div className="max-w-3xl mx-auto p-6">
         <h1 className="text-3xl md:text-4xl font-bold mb-8 text-center">Quick Investing Quiz</h1>
 
         <div className="space-y-5 mt-4">
@@ -132,7 +157,7 @@ export default function Page(){
               <div className="font-semibold mb-4 text-lg text-gray-50">{i + 1}. {q.q}</div>
               <div className="space-y-3">
                 {q.opts.map((opt, oi) => (
-                  <label key={oi} className={`flex items-center gap-3 cursor-pointer p-3 rounded-lg transition-all duration-200 ${answers[i] === oi ? 'bg-primary/15 ring-2 ring-primary/50' : 'hover:bg-white/10'} ${submitted && q.a===oi ? 'bg-green-500/20 ring-2 ring-green-400/50 text-green-300' : 'text-gray-200'}`}>
+                  <label key={oi} className={`flex items-center gap-3 cursor-pointer p-3 rounded-lg transition-all duration-200 ${answers[i] === oi ? 'bg-primary/15 ring-2 ring-primary/50' : 'hover:bg-white/10'} ${submitted && q.a === oi ? 'bg-green-500/20 ring-2 ring-green-400/50 text-green-300' : 'text-gray-200'}`}>
                     <input
                       className="accent-primary w-5 h-5 cursor-pointer"
                       type="radio"
@@ -150,7 +175,12 @@ export default function Page(){
         </div>
 
         {!submitted ? (
-          <div className="mt-8 flex justify-center">
+          <div className="mt-8 flex flex-col items-center gap-3">
+            {errMsg && (
+              <div className="px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm font-medium w-full text-center">
+                ⚠️ {errMsg}
+              </div>
+            )}
             <button onClick={handleSubmit} className="px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 rounded-xl font-semibold shadow-lg hover:shadow-blue-500/50 transition-all duration-300 hover:scale-105">Submit Quiz</button>
           </div>
         ) : (
